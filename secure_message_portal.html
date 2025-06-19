@@ -1,0 +1,97 @@
+<!-- الكود الكامل للواجهة الموحدة: تشفير + فك التشفير -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>منصة الرسائل المشفرة الرسمية</title>
+  <script src="https://unpkg.com/openpgp@latest/dist/openpgp.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <div class="max-w-7xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <h1 class="text-4xl font-bold text-center text-blue-900 mb-8">🔐 منصة الرسائل الرسمية المشفرة</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- قسم التشفير -->
+      <div>
+        <h2 class="text-2xl font-semibold text-blue-800 mb-4">✉️ تشفير الرسالة</h2>
+        <label class="block text-gray-700 mb-1">📝 الرسالة الأصلية:</label>
+        <textarea id="plainText" rows="8" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <button onclick="encryptMessage()" class="mt-4 bg-blue-800 text-white py-2 px-6 rounded-xl hover:bg-blue-900 transition-all">
+          🔐 تشفير
+        </button>
+        <label class="block text-gray-700 mt-6 mb-1">📄 النص المشفّر:</label>
+        <textarea id="encryptedText" rows="8" readonly class="w-full p-3 border border-dashed border-gray-400 bg-gray-50 rounded-xl"></textarea>
+      </div>
+
+      <!-- قسم فك التشفير -->
+      <div>
+        <h2 class="text-2xl font-semibold text-green-800 mb-4">🔓 فك التشفير</h2>
+        <label class="block text-gray-700 mb-1">📄 النص المشفّر:</label>
+        <textarea id="encryptedInput" rows="6" class="w-full p-3 border border-gray-300 rounded-xl"></textarea>
+
+        <label class="block text-gray-700 mt-4 mb-1">🔑 المفتاح الخاص:</label>
+        <textarea id="privateKey" rows="6" class="w-full p-3 border border-gray-300 rounded-xl"></textarea>
+
+        <label class="block text-gray-700 mt-4 mb-1">🔐 كلمة السر:</label>
+        <input type="password" id="passphrase" value="secure2025" class="w-full p-3 border border-gray-300 rounded-xl">
+
+        <button onclick="decryptMessage()" class="mt-4 bg-green-700 text-white py-2 px-6 rounded-xl hover:bg-green-800 transition-all">
+          📥 فك التشفير
+        </button>
+
+        <label class="block text-gray-700 mt-6 mb-1">📬 الرسالة الأصلية:</label>
+        <textarea id="decryptedText" rows="6" readonly class="w-full p-3 border border-gray-100 bg-gray-50 rounded-xl"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function encryptMessage() {
+      const message = document.getElementById('plainText').value;
+
+      const publicKeyArmored = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+mDMEZk9FWhYJKwYBBAHaRw8BAQdA3WjBTTvlG9eTX6UBb+RZbR4uT2QqsSktXGH8
+RK12yUm0I1xhbGdoYSBhbGdvdnlhIChndXYub20pIDxzZWN1cmVAZ292Lm9tPoiP
+BBMWCgA+BQJmT0VaBgsJBwgDAgQVCAoCBBYCAQACGQECGwMCHgEWIQScW8VHDzRu
+GkF3VQOcB8MWGbqLLQUCZk9FWwAKCRDcB8MWGbqLLX1FAQD0lXJJJrGABc4PYYH3
+3TxAmA4Kr5AHtx+UEDPbRREcHxBkuwEAgjfLn8gYDnGjhkT9lj86pGbdFopGVc5L
+qV8ysN4c25KhggQ=
+=edqA
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+      const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
+
+      const encrypted = await openpgp.encrypt({
+        message: await openpgp.createMessage({ text: message }),
+        encryptionKeys: publicKey
+      });
+
+      document.getElementById('encryptedText').value = encrypted;
+    }
+
+    async function decryptMessage() {
+      const encryptedMessage = document.getElementById('encryptedInput').value;
+      const privateKeyArmored = document.getElementById('privateKey').value;
+      const passphrase = document.getElementById('passphrase').value;
+
+      const privateKey = await openpgp.decryptKey({
+        privateKey: await openpgp.readPrivateKey({ armoredKey: privateKeyArmored }),
+        passphrase
+      });
+
+      const message = await openpgp.readMessage({
+        armoredMessage: encryptedMessage
+      });
+
+      const { data: decrypted } = await openpgp.decrypt({
+        message,
+        decryptionKeys: privateKey
+      });
+
+      document.getElementById('decryptedText').value = decrypted;
+    }
+  </script>
+</body>
+</html>
